@@ -8,11 +8,11 @@
     "dependencies": [
         "mysa"
     ],
-    "documentation": "https://github.com/kgelinas/Mysa_HA",
+    "documentation": "https://github.com/Danimal4326/Mysa_HA",
     "integration_type": "service",
     "iot_class": "cloud_push",
-    "issue_tracker": "https://github.com/kgelinas/Mysa_HA/issues",
+    "issue_tracker": "https://github.com/Danimal4326/Mysa_HA/issues",
     "quality_scale": "silver",
-    "homeassistant": "2024.1.0",
-    "version": "0.9.2"
+    "homeassistant": "2026.11.0",
+    "version": "0.10.0"
 }

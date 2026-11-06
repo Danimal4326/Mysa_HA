@@ -6,7 +6,7 @@ communication via HTTP and MQTT protocols.
 
 Includes advanced features like "Magic Upgrade" for converting Lite devices
 to Full. For Home Assistant users, consider using the mysa_extended integration
-instead: https://github.com/kgelinas/Mysa_HA
+instead: https://github.com/Danimal4326/Mysa_HA
 
 Usage:
     cd tools

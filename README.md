@@ -1,12 +1,15 @@
 # Mysa for Home Assistant
 
-[![Version](https://img.shields.io/badge/version-0.9.2-blue.svg)](https://github.com/kgelinas/Mysa_HA)
+[![Release](https://img.shields.io/github/v/release/Danimal4326/Mysa_HA)](https://github.com/Danimal4326/Mysa_HA/releases)
+[![CI](https://github.com/Danimal4326/Mysa_HA/actions/workflows/ci.yaml/badge.svg)](https://github.com/Danimal4326/Mysa_HA/actions/workflows/ci.yaml)
 
 
 
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 
 A native cloud integration for Mysa devices in Home Assistant. Uses the official Mysa Cloud architecture (MQTT + HTTP) for real-time updates and instant command execution.
+
+> **Fork notice:** this is [Danimal4326/Mysa_HA](https://github.com/Danimal4326/Mysa_HA), a fork of [kgelinas/Mysa_HA](https://github.com/kgelinas/Mysa_HA). It fixes Duty Cycle / Power / Connection sensors that froze until a reload, makes `hvac_action` accurate (In-Floor thermostats in particular), and moves to the Home Assistant 2026.11 native climate API. See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ## Features
 
@@ -64,7 +67,8 @@ A native cloud integration for Mysa devices in Home Assistant. Uses the official
 
 1. Go to HACS -> Integrations
 2. Click the 3 dots in the top right corner and select "Custom repositories"
-3. Add `kgelinas/Mysa_HA` as a custom repository
+3. Add `https://github.com/Danimal4326/Mysa_HA` as a custom repository (type: **Integration**)
+   - Switching from the upstream `kgelinas/Mysa_HA`? Remove that repository in HACS first (your Mysa config entry is kept), then add this one.
 4. Click "Install"
 5. Restart Home Assistant
 
@@ -316,6 +320,7 @@ action:
 
 ## Credits
 
+- [kgelinas/Mysa_HA](https://github.com/kgelinas/Mysa_HA) by @kgelinas - The original integration this fork is based on
 - [mysotherm](https://github.com/dlenski/mysotherm) by @dlenski - Authentication and API logic
 - [mqttpacket](https://github.com/jlitzingerdev/mqttpacket) by @jlitzingerdev - MQTT packet implementation (adapted)
 
