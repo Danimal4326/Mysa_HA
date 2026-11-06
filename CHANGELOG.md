@@ -22,6 +22,7 @@ First release of the [Danimal4326/Mysa_HA](https://github.com/Danimal4326/Mysa_H
 - **Test tooling**: Tests now use the core-maintained `pytest-homeassistant` package (2026.11.0, Python 3.14), replacing the discontinued `pytest-homeassistant-custom-component`.
 - **Formatting**: ruff 0.17 formatting, and pre-commit pins ruff v0.17.4.
 - **Fork metadata**: Documentation, issue tracker, codeowners, README and HACS instructions now point to `Danimal4326/Mysa_HA`.
+- **License**: This fork's changes are MIT-licensed (see `LICENSE`). Upstream code is still unlicensed.
 
 ## [0.9.2] - 2026-03-22
 ### Added

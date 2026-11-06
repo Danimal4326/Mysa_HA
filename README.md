@@ -318,6 +318,10 @@ action:
       entity_id: climate.living_room_mini_split
 ```
 
+## License
+
+Changes made in this fork by Dan Chlopek (from commit `c9c0c52` onward) are released under the [MIT License](LICENSE). The upstream [kgelinas/Mysa_HA](https://github.com/kgelinas/Mysa_HA) code has no license, and this fork does not grant one for it. See [LICENSE](LICENSE).
+
 ## Credits
 
 - [kgelinas/Mysa_HA](https://github.com/kgelinas/Mysa_HA) by @kgelinas - The original integration this fork is based on
