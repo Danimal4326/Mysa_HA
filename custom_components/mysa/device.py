@@ -169,7 +169,10 @@ class MysaDeviceLogic:
         tc_val = get_v(["target_cool", "coolSetpoint"])
         if tc_val is not None:
             state["target_cool"] = tc_val
-        duty_val = get_v(["dc", "Duty", "dtyCycle", "DutyCycle"])
+        # heatStat is the In-Floor (INF-V1) live relay state over MQTT. Map it to
+        # Duty too: entities read Duty before DutyCycle, so otherwise a stale
+        # HTTP Duty would mask the live value.
+        duty_val = get_v(["dc", "Duty", "dtyCycle", "DutyCycle", "heatStat"])
         if duty_val is not None:
             state["Duty"] = duty_val
         rssi_val = get_v(["rssi", "Rssi", "RSSI"])

@@ -1249,6 +1249,56 @@ class TestClimateEdgeCases:
         assert entity.hvac_action == HVACAction.IDLE
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("state", "expected"),
+        [
+            # Live In-Floor relay state wins over the temperature comparison
+            ({"md": 3, "heatStat": 1, "ambTemp": 25.0, "stpt": 20.0}, HVACAction.HEATING),
+            ({"md": 3, "heatStat": 0, "ambTemp": 18.0, "stpt": 25.0}, HVACAction.IDLE),
+            # Unparseable duty falls back to temperatures
+            ({"md": 3, "dc": "bad", "ambTemp": 18.0, "stpt": 25.0}, HVACAction.HEATING),
+            ({"md": 3, "dc": "bad", "ambTemp": 26.0, "stpt": 25.0}, HVACAction.IDLE),
+            # No duty: Floor sensor mode compares the floor temp, not air temp
+            (
+                {"md": 3, "SensorMode": 1, "Infloor": 23.0, "ambTemp": 19.0, "stpt": 21.0},
+                HVACAction.IDLE,
+            ),
+            (
+                {"md": 3, "SensorMode": 1, "Infloor": 19.0, "ambTemp": 23.0, "stpt": 21.0},
+                HVACAction.HEATING,
+            ),
+            # No duty and no temperatures
+            ({"md": 3}, HVACAction.IDLE),
+        ],
+    )
+    async def test_hvac_action_duty_and_floor_mode(
+        self, hass, mock_api, mock_entry, state, expected
+    ):
+        """hvac_action uses reported duty first, then the controlling temperature."""
+        from custom_components.mysa.climate import MysaClimate
+
+        async def async_update():
+            return {"inf_device": state}
+
+        coordinator = DataUpdateCoordinator(
+            hass,
+            MagicMock(),
+            name="test",
+            update_method=async_update,
+            config_entry=mock_entry,
+        )
+        await coordinator.async_refresh()
+
+        entity = MysaClimate(
+            coordinator,
+            "inf_device",
+            {"Id": "inf_device", "Model": "INF-V1-0", "Name": "Floor"},
+            mock_api,
+            mock_entry,
+        )
+        assert entity.hvac_action == expected
+
+    @pytest.mark.asyncio
     async def test_no_state_properties(
         self, hass, mock_coordinator_no_state, mock_device_data, mock_api, mock_entry
     ):
@@ -3578,6 +3628,7 @@ class TestMysaSTV10ClimateExtended:
         device_data = {"Model": "ST-V1-0", "Name": "ST-V1-0"}
         api = MagicMock()
         api.states = {}
+        api.fetch_stv10_shadows = AsyncMock()
         coordinator = MagicMock()
         coordinator.data = api.states
         entry = MagicMock()

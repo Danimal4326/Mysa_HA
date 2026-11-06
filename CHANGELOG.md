@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.9.2.1] - 2026-11-05
+### Fixed
+- **Frozen Duty Cycle / Power / Connection**: MQTT pushes used `async_set_updated_data()`, which restarts the coordinator's 120s HTTP poll timer. Devices streaming MQTT every few seconds kept pushing the poll back, so it almost never ran, and cloud-only fields (`Duty`, `Connected`) froze until a reload. MQTT pushes now notify listeners without rescheduling the poll.
+- **In-Floor live heating state**: The INF-V1 MQTT `heatStat` (relay state) is now normalized into `Duty`, so Duty Cycle, Power and Energy follow the device in real time. Before, a stale HTTP `Duty` masked it.
+- **`hvac_action` accuracy**: Uses the reported duty / relay state first. The temperature fallback now uses the controlling sensor (floor temperature in Floor sensor mode) instead of comparing air temperature to a floor setpoint.
+- **MQTT reconnect backoff**: Backoff and warning-level logging now reset after a connection that had completed its handshake drops, instead of staying at the 60s cap with debug-only logs.
+- Kept a reference to the subscription-refresh close task so it can't be garbage-collected mid-run.
+- Fixed `test_s1_climate_fallback` erroring on an un-awaitable mock.
+
 ## [0.9.2] - 2026-03-22
 ### Added
 - **ST-V1 Support**: Added full support for Central AC/Heat (ST-V1) devices, including mode parsing via 3-digit config codes.

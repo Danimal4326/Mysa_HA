@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import time
@@ -70,6 +71,7 @@ class TestAsyncSetupEntry:
             mock_coordinator = MagicMock()
             mock_coordinator.async_config_entry_first_refresh = AsyncMock()
             mock_coordinator.async_request_refresh = AsyncMock()
+            mock_coordinator.last_update_success = True
             MockCoordinator.return_value = mock_coordinator
 
             hass.config_entries = MagicMock()
@@ -95,7 +97,15 @@ class TestAsyncSetupEntry:
             mock_api.states = {"test_device": {"temp": 21}}
             await push_callback()
 
-            # 3. Verify it pushed data to coordinator
+            # 3. Verify it pushed data to listeners without resetting the poll timer
+            assert mock_coordinator.data is mock_api.states
+            mock_coordinator.async_update_listeners.assert_called()
+            mock_coordinator.async_set_updated_data.assert_not_called()
+
+            # 4. After a failed HTTP poll, MQTT push restores availability
+            mock_coordinator.last_update_success = False
+            await asyncio.sleep(0.6)  # step out of the debounce window
+            await push_callback()
             mock_coordinator.async_set_updated_data.assert_called_with(mock_api.states)
 
     @pytest.mark.asyncio
@@ -112,8 +122,9 @@ class TestAsyncSetupEntry:
             MockApi.return_value = mock_api
             mock_coordinator = MagicMock()
             mock_coordinator.async_config_entry_first_refresh = AsyncMock()
-            # async_set_updated_data is a sync method in DataUpdateCoordinator
-            mock_coordinator.async_set_updated_data = MagicMock()
+            # async_update_listeners is a sync method in DataUpdateCoordinator
+            mock_coordinator.async_update_listeners = MagicMock()
+            mock_coordinator.last_update_success = True
             MockCoordinator.return_value = mock_coordinator
 
             mock_entry.domain = DOMAIN
@@ -124,20 +135,20 @@ class TestAsyncSetupEntry:
 
             # 1. Trigger first push
             await push_callback()
-            assert mock_coordinator.async_set_updated_data.called
+            assert mock_coordinator.async_update_listeners.called
 
             # 2. Trigger second push immediately (should debounce)
-            mock_coordinator.async_set_updated_data.reset_mock()
+            mock_coordinator.async_update_listeners.reset_mock()
             await push_callback()
-            assert not mock_coordinator.async_set_updated_data.called
+            assert not mock_coordinator.async_update_listeners.called
 
             # 3. Trigger third push immediately (should cancel previous debounce and schedule new one)
             await push_callback()
-            assert not mock_coordinator.async_set_updated_data.called
+            assert not mock_coordinator.async_update_listeners.called
 
             # 4. Wait for debounce
             await asyncio.sleep(0.6)
-            assert mock_coordinator.async_set_updated_data.called
+            assert mock_coordinator.async_update_listeners.called
 
     @pytest.mark.asyncio
     async def test_setup_entry_auth_failure(self, hass, mock_entry):
@@ -680,7 +691,8 @@ class TestInitConsolidated:
         mock_coord_cls = MagicMock()
         mock_coordinator = mock_coord_cls.return_value
         mock_coordinator.async_config_entry_first_refresh = AsyncMock()
-        mock_coordinator.async_set_updated_data = MagicMock()
+        mock_coordinator.async_update_listeners = MagicMock()
+        mock_coordinator.last_update_success = True
 
         monkeypatch.setattr(custom_components.mysa, "MysaApi", mock_api_cls)
         monkeypatch.setattr(
@@ -710,7 +722,7 @@ class TestInitConsolidated:
         # 1. First call (immediate push)
         with patch("time.time", return_value=100.0):
             await callback()
-            assert mock_coordinator.async_set_updated_data.call_count == 1
+            assert mock_coordinator.async_update_listeners.call_count == 1
 
         # 2. Rapid call (debounce) - within 0.5s of 100.0
         with patch("time.time", return_value=100.1):
@@ -722,4 +734,4 @@ class TestInitConsolidated:
         with patch("time.time", return_value=110.0):
              await callback()
              # Line 125-126 should execute: if _debounce_task: _debounce_task.cancel(); _debounce_task = None
-             assert mock_coordinator.async_set_updated_data.call_count == 2
+             assert mock_coordinator.async_update_listeners.call_count == 2

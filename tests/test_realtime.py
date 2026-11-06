@@ -1343,3 +1343,39 @@ async def test_realtime_send_command_persistent_only_failure():
     with patch.object(realtime, "_send_one_off_command", AsyncMock()) as mock_one_off:
         await realtime.send_command("dev1", {}, "user1", use_persistent_only=True)
         mock_one_off.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_fibonacci_reset_after_established_connection_drops(mock_hass):
+    """A connection that completed its handshake and then dropped restarts backoff."""
+    rt = MysaRealtime(mock_hass, AsyncMock(), MagicMock())
+    rt._mqtt_reconnect_delay = 1.0
+
+    with (
+        patch(
+            "custom_components.mysa.realtime.asyncio.sleep", new_callable=AsyncMock
+        ) as mock_sleep,
+        patch("custom_components.mysa.realtime._LOGGER") as mock_logger,
+    ):
+        call_count = 0
+
+        async def mock_listen():
+            nonlocal call_count
+            call_count += 1
+            if call_count == 3:
+                # Handshake succeeded, then the socket dropped (e.g. 1005)
+                rt._handshake_ok = True
+            if call_count >= 5:
+                rt._mqtt_should_reconnect = False
+            raise Exception(f"Fail {call_count}")
+
+        with patch.object(rt, "_mqtt_listen", side_effect=mock_listen):
+            rt._mqtt_should_reconnect = True
+            await rt._mqtt_listener_loop()
+
+        sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
+        # 1, 1, then reset after the established connection dropped: 1, 1, 2
+        assert sleep_calls == [1.0, 1.0, 1.0, 1.0, 2.0]
+        assert rt._handshake_ok is False
+        # The new outage is logged at warning level again
+        assert mock_logger.warning.call_count == 2

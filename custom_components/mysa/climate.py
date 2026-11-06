@@ -408,30 +408,27 @@ class MysaClimate(
         if not state:
             return HVACAction.IDLE
 
-        # User Request: Dynamic Idle/Heating based on temperature setpoint
-        current_str = self._extract_value(
-            state, ["ambTemp", "CorrectedTemp", "SensorTemp"]
+        # Prefer the device's reported duty / relay state: it is the real answer.
+        duty = self._extract_value(
+            state, ["dc", "Duty", "dtyCycle", "DutyCycle", "heatStat"]
         )
-        target_str = self._extract_value(state, ["stpt", "SetPoint"])
-
-        if current_str is not None and target_str is not None:
+        if duty is not None:
             try:
-                current = float(current_str)
-                target = float(target_str)
-
-                # If actively heating mode is on
-                if self.hvac_mode == HVACMode.HEAT:
-                    # If we are below target, we are heating (or trying to)
-                    if current < target:
-                        return HVACAction.HEATING
-                    # If we are over or equal, we are idle
-                    return HVACAction.IDLE
+                return HVACAction.HEATING if float(duty) > 0 else HVACAction.IDLE
             except (ValueError, TypeError):
                 pass
 
-        # Fallback: Priority checking Duty Cycle if temps unavailable
-        duty = self._extract_value(state, ["dc", "Duty", "dtyCycle", "DutyCycle"])
-        if duty is not None and float(duty) > 0:
+        # Fallback: compare the controlling temperature with the setpoint.
+        # current_temperature follows SensorMode (floor vs air) on In-Floor
+        # units; comparing raw ambTemp against a floor setpoint was wrong.
+        current = self.current_temperature
+        target = self.target_temperature
+        if (
+            current is not None
+            and target is not None
+            and self.hvac_mode == HVACMode.HEAT
+            and current < target
+        ):
             return HVACAction.HEATING
 
         return HVACAction.IDLE

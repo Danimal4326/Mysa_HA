@@ -166,6 +166,8 @@ class TestMysaDeviceLogic:
 
         assert state["DutyCycle"] == 50
         assert state["Voltage"] == 240
+        # heatStat must also drive Duty, which entities read first
+        assert state["Duty"] == 50
 
     def test_normalize_state_infloor_sensor_mode(self):
         """Test normalization of SensorMode and Infloor variants."""

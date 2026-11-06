@@ -57,6 +57,8 @@ class MysaRealtime:
         self._use_batch = False  # Disabled in Core (not needed for history)
         self._batch_retry_time = 0.0
         self._last_packet_time = 0.0  # Time of last received MQTT packet
+        self._handshake_ok = False  # Set once a connection completes its handshake
+        self._close_task: asyncio.Task[None] | None = None
 
     @property
     def is_running(self) -> bool:
@@ -102,7 +104,8 @@ class MysaRealtime:
                 _LOGGER.info(
                     "Device list changed, forcing MQTT reconnect to update subscriptions"
                 )
-                asyncio.create_task(self._close_websocket())
+                # Keep a reference: the event loop only holds tasks weakly
+                self._close_task = asyncio.create_task(self._close_websocket())
 
     async def start(self) -> None:
         """Start the persistent MQTT listener."""
@@ -161,6 +164,13 @@ class MysaRealtime:
                 # Justification: Must catch all errors to keep the keep-alive loop running.
                 # Justification: Catch-all to ensure the listener loop keeps running despite
                 # unexpected errors.
+                if self._handshake_ok:
+                    # The connection worked before it dropped: this is a fresh
+                    # outage, so restart backoff and log it at warning again.
+                    self._handshake_ok = False
+                    reconnect_delay = self._mqtt_reconnect_delay
+                    prev_delay = 0.0
+                    first_failure_logged = False
                 if not first_failure_logged:
                     _LOGGER.warning(
                         "MQTT connection lost: %s. Will retry in background (reconnecting in %ds)",
@@ -179,9 +189,7 @@ class MysaRealtime:
                 await asyncio.sleep(reconnect_delay)
 
                 # Fibonacci backoff
-                next_delay = reconnect_delay + (
-                    prev_delay if "prev_delay" in locals() else 0
-                )
+                next_delay = reconnect_delay + prev_delay
                 prev_delay = reconnect_delay
                 reconnect_delay = min(next_delay, 60.0)
 
@@ -200,6 +208,7 @@ class MysaRealtime:
         try:
             await self._perform_mqtt_handshake(ws)
             self._mqtt_connected.set()
+            self._handshake_ok = True
             self._last_packet_time = time.time()  # Initialize on connect
             await self._run_mqtt_loop(ws)
         except Exception as listen_error:

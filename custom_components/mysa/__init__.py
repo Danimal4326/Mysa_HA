@@ -102,6 +102,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry[MysaData]) -
     _last_push_time = 0.0
     _debounce_task: asyncio.Task[None] | None = None
 
+    def _push_to_listeners() -> None:
+        """Notify entities of new MQTT state without resetting the poll timer.
+
+        DataUpdateCoordinator.async_set_updated_data() reschedules the next HTTP
+        poll. Devices that stream MQTT every few seconds would keep pushing that
+        poll back so it never ran, and cloud-only fields (Duty, Connected, ...)
+        froze until the integration was reloaded.
+        """
+        if not coordinator.last_update_success:
+            # Last HTTP poll failed: use the full call so entities that MQTT
+            # keeps fresh become available again.
+            coordinator.async_set_updated_data(api.states)
+            return
+        coordinator.data = api.states
+        coordinator.async_update_listeners()
+
     async def async_push_update() -> None:
         """Push updated state to coordinator listeners with debouncing."""
         nonlocal _last_push_time, _debounce_task
@@ -114,7 +130,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry[MysaData]) -
 
             async def delayed_push() -> None:
                 await asyncio.sleep(0.5)
-                coordinator.async_set_updated_data(api.states)
+                _push_to_listeners()
                 nonlocal _last_push_time
                 _last_push_time = time.time()
 
@@ -125,7 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry[MysaData]) -
             _debounce_task.cancel()
             _debounce_task = None
 
-        coordinator.async_set_updated_data(api.states)
+        _push_to_listeners()
         _last_push_time = now
 
     api.coordinator_callback = async_push_update
