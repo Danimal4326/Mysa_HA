@@ -1,6 +1,10 @@
 {
   "domain": "mysa",
   "name": "Mysa",
+  "categories": [
+    "climate.thermostats_heating",
+    "climate.heat_pumps_air_conditioning"
+  ],
   "codeowners": [
     "@Danimal4326"
   ],
@@ -9,7 +13,6 @@
   "integration_type": "hub",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/Danimal4326/Mysa_HA/issues",
-  "homeassistant": "2026.11.0",
   "requirements": [
     "python-jose>=3.3.0",
     "websockets>=13.1",

@@ -145,8 +145,8 @@
             "temperature_format": {
                 "name": "Display Format",
                 "state": {
-                    "Celsius": "Celsius",
-                    "Fahrenheit": "Fahrenheit"
+                    "celsius": "Celsius",
+                    "fahrenheit": "Fahrenheit"
                 }
             }
         },

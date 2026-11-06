@@ -351,7 +351,8 @@ class MysaTemperatureFormatSelect(
         self._attr_unique_id = f"{device_id}_display_format"
         self._pending_option: str | None = None
         self._pending_timestamp: float | None = None
-        self._options = ["Celsius", "Fahrenheit"]
+        # Option values are translation keys: hassfest requires [a-z0-9-_]+
+        self._options = ["celsius", "fahrenheit"]
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -397,7 +398,7 @@ class MysaTemperatureFormatSelect(
         )
         val = self._get_start_value(state)  # "F" or "C"
 
-        current_cloud = "Fahrenheit" if val == "F" else "Celsius"
+        current_cloud = "fahrenheit" if val == "F" else "celsius"
 
         if self._pending_option is not None:
             # 1. Check expiration
@@ -419,7 +420,7 @@ class MysaTemperatureFormatSelect(
 
     async def async_select_option(self, option: str) -> None:
         """Set display format."""
-        is_fahrenheit = option == "Fahrenheit"
+        is_fahrenheit = option == "fahrenheit"
         self._pending_option = option
         self._pending_timestamp = time.time()
         self.async_write_ha_state()

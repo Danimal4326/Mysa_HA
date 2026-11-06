@@ -13,6 +13,8 @@ First release of the [Danimal4326/Mysa_HA](https://github.com/Danimal4326/Mysa_H
 - **MQTT reconnect backoff**: Backoff and warning-level logging now reset after a connection that had completed its handshake drops, instead of staying at the 60s cap with debug-only logs.
 - Kept a reference to the subscription-refresh close task so it can't be garbage-collected mid-run.
 - Fixed `test_s1_climate_fallback` erroring on an un-awaitable mock.
+- **Hassfest / HACS validation**: Removed the `homeassistant` key from `manifest.json`, which hassfest rejects for custom integrations (the minimum HA version lives in `hacs.json`). Added `categories` and `CONFIG_SCHEMA` (mysa_extended).
+- **Display Format select**: Option values are now the translation keys `celsius` / `fahrenheit`. hassfest rejected the old `Celsius` / `Fahrenheit` keys. The UI still shows "Celsius" / "Fahrenheit", but the entity **state** is now lowercase, so update any automation that compares it.
 
 ### Changed
 - **Requires Home Assistant 2026.11.0 or newer.**

@@ -1,6 +1,9 @@
 {
     "domain": "mysa_extended",
     "name": "Mysa Extended",
+    "categories": [
+        "climate.thermostats_heating"
+    ],
     "codeowners": [
         "@gelke01"
     ],
@@ -13,6 +16,5 @@
     "iot_class": "cloud_push",
     "issue_tracker": "https://github.com/Danimal4326/Mysa_HA/issues",
     "quality_scale": "silver",
-    "homeassistant": "2026.11.0",
     "version": "0.10.0"
 }

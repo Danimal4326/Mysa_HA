@@ -248,7 +248,11 @@
                 "name": "Proximity Mode"
             },
             "temperature_format": {
-                "name": "Display Format"
+                "name": "Display Format",
+                "state": {
+                    "celsius": "Celsius",
+                    "fahrenheit": "Fahrenheit"
+                }
             }
         },
         "update": {

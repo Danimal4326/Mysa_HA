@@ -248,7 +248,11 @@
                 "name": "N\u00e4herungsmodus"
             },
             "temperature_format": {
-                "name": "Anzeigeformat"
+                "name": "Anzeigeformat",
+                "state": {
+                    "celsius": "Celsius",
+                    "fahrenheit": "Fahrenheit"
+                }
             }
         },
         "update": {

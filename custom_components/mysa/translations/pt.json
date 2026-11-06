@@ -248,7 +248,11 @@
                 "name": "Modo de proximidade"
             },
             "temperature_format": {
-                "name": "Formato de exibi\u00e7\u00e3o"
+                "name": "Formato de exibi\u00e7\u00e3o",
+                "state": {
+                    "celsius": "Celsius",
+                    "fahrenheit": "Fahrenheit"
+                }
             }
         },
         "update": {

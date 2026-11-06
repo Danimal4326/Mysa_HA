@@ -450,24 +450,24 @@ class TestMysaTemperatureFormatSelect:
         entity.hass = hass
 
         # Test options
-        assert "Celsius" in entity.options
-        assert "Fahrenheit" in entity.options
+        assert "celsius" in entity.options
+        assert "fahrenheit" in entity.options
 
         # Test initial state (Celsius default)
         mock_coordinator.data = {"stv1_device": {}}
-        assert entity.current_option == "Celsius"
+        assert entity.current_option == "celsius"
 
         # Test with format="F"
         mock_coordinator.data = {"stv1_device": {"temperature_format": "F"}}
-        assert entity.current_option == "Fahrenheit"
+        assert entity.current_option == "fahrenheit"
 
         # Test selecting Fahrenheit
-        await entity.async_select_option("Fahrenheit")
+        await entity.async_select_option("fahrenheit")
         # Check model to decide setter - ST-V1-0 uses set_stv10_temperature_format
         mock_api.set_stv10_temperature_format.assert_called_with("stv1_device", True)
 
         # Test selecting Celsius
-        await entity.async_select_option("Celsius")
+        await entity.async_select_option("celsius")
         mock_api.set_stv10_temperature_format.assert_called_with("stv1_device", False)
 
 
@@ -490,29 +490,29 @@ class TestSelectConsolidated:
         assert sel._get_start_value({"Format": "C"}) == "C"
 
         # 401-413: Sticky logic
-        sel._pending_option = "Fahrenheit"
+        sel._pending_option = "fahrenheit"
         sel._pending_timestamp = time.time()
         # If currently Celsius on cloud, should return pending
         coordinator.data = {"d1": {"Format": "C"}}
-        assert sel.current_option == "Fahrenheit"
+        assert sel.current_option == "fahrenheit"
 
         # Expiration (402-404)
         sel._pending_timestamp = time.time() - 40  # > 30s
-        assert sel.current_option == "Celsius"
+        assert sel.current_option == "celsius"
         assert sel._pending_option is None
 
         # Clears when convergent
-        sel._pending_option = "Fahrenheit"
+        sel._pending_option = "fahrenheit"
         sel._pending_timestamp = time.time()
         coordinator.data = {"d1": {"Format": "F"}}
-        assert sel.current_option == "Fahrenheit"
+        assert sel.current_option == "fahrenheit"
         assert sel._pending_option is None
 
         # 430-434: Error path
         api.set_stv10_temperature_format = AsyncMock(side_effect=Exception("Fail"))
         api.set_temperature_format = AsyncMock(side_effect=Exception("Fail"))
         with pytest.raises(HomeAssistantError):
-            await sel.async_select_option("Fahrenheit")
+            await sel.async_select_option("fahrenheit")
 
     @pytest.mark.asyncio
     async def test_select_entity_logic_consolidated(self, hass):

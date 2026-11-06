@@ -17,3 +17,6 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
+          # Upstream kgelinas/Mysa_HA has no license, and a fork can't add one
+          # on the author's behalf. HACS custom repositories work without one.
+          ignore: license

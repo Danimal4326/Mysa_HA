@@ -248,7 +248,11 @@
                 "name": "Modalit\u00e0 di prossimit\u00e0"
             },
             "temperature_format": {
-                "name": "Formato display"
+                "name": "Formato display",
+                "state": {
+                    "celsius": "Celsius",
+                    "fahrenheit": "Fahrenheit"
+                }
             }
         },
         "update": {
