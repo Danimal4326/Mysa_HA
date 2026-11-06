@@ -101,16 +101,16 @@ class TestOptimisticClimate:
 
         # Cloud = 20
         mock_coordinator.data = {"device1": {"stpt": 20.0}}
-        assert entity.target_temperature == 20.0
+        assert entity.native_target_temperature == 20.0
 
         # Set to 22.5
         await entity.async_set_temperature(temperature=22.5)
-        assert entity.target_temperature == 22.5
+        assert entity.native_target_temperature == 22.5
         mock_api.set_target_temperature.assert_called_with("device1", 22.5)
 
         # Cloud update (22.5) -> Convergence
         mock_coordinator.data = {"device1": {"stpt": 22.5}}
-        assert entity.target_temperature == 22.5
+        assert entity.native_target_temperature == 22.5
         assert "target_temperature" not in entity._pending_updates
 
     @pytest.mark.asyncio
@@ -197,8 +197,8 @@ class TestCoverageEdgeCases:
 
         # 1. None Data
         mock_coordinator.data = None
-        assert entity.target_temperature is None
-        assert entity.current_temperature is None
+        assert entity.native_target_temperature is None
+        assert entity.native_current_temperature is None
         assert entity.current_humidity is None
         assert entity.hvac_mode == HVACMode.HEAT  # Default fallback
         # Wait, if data is None, hvac_mode returns HEAT (line 214).
@@ -237,7 +237,7 @@ class TestCoverageEdgeCases:
 
         mock_coordinator.data = {"device1": {"stpt": 20}}
         # This triggers the isinstance(val, (int, float)) check
-        assert entity.target_temperature == 20.0
+        assert entity.native_target_temperature == 20.0
         assert "target_temperature" not in entity._pending_updates
 
         # Test non-numeric match

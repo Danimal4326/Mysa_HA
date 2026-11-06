@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.9.2.2] - 2026-11-05
+### Changed
+- **Requires Home Assistant 2026.11.0 or newer.**
+- **Climate native temperature API**: Climate entities now implement `native_temperature_unit`, `native_current_temperature`, `native_target_temperature`, `native_target_temperature_low` and `native_target_temperature_high`. HA 2026.11 deprecated the old names (they stop working in 2027.11), and this removes the "provides the deprecated ..." log warnings.
+- **Test tooling**: Tests now use the core-maintained `pytest-homeassistant` package (2026.11.0, Python 3.14), replacing the discontinued `pytest-homeassistant-custom-component`.
+- **Formatting**: ruff 0.17 formatting, and pre-commit pins ruff v0.17.4.
+
 ## [0.9.2.1] - 2026-11-05
 ### Fixed
 - **Frozen Duty Cycle / Power / Connection**: MQTT pushes used `async_set_updated_data()`, which restarts the coordinator's 120s HTTP poll timer. Devices streaming MQTT every few seconds kept pushing the poll back, so it almost never ran, and cloud-only fields (`Duty`, `Connected`) froze until a reload. MQTT pushes now notify listeners without rescheduling the poll.

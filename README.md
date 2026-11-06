@@ -287,7 +287,7 @@ A Dev Container configuration is included for VS Code. Open the project in VS Co
 ## Requirements
 
 - Mysa account (email/password)
-- Home Assistant 2025.10.0 or later
+- Home Assistant 2026.11.0 or later
 
 ## Advanced Configuration (Automation)
 

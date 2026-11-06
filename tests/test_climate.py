@@ -245,7 +245,7 @@ class TestMysaClimateProperties:
         """Test current_temperature property."""
         await mock_coordinator.async_refresh()
 
-        temp = climate_entity.current_temperature
+        temp = climate_entity.native_current_temperature
 
         assert temp == 20.5
 
@@ -258,19 +258,19 @@ class TestMysaClimateProperties:
 
         # 1. Test with ONLY ambTemp
         mock_coordinator.data = {"device1": {"ambTemp": 20.0}}
-        assert climate_entity.current_temperature == 20.0
+        assert climate_entity.native_current_temperature == 20.0
 
         # 2. Test with ambTemp AND CorrectedTemp (Simulate Stale ambTemp)
         # We expect CorrectedTemp (21.0) to be prioritized
         mock_coordinator.data = {"device1": {"ambTemp": 20.0, "CorrectedTemp": 21.0}}
-        assert climate_entity.current_temperature == 21.0
+        assert climate_entity.native_current_temperature == 21.0
 
     @pytest.mark.asyncio
     async def test_target_temperature(self, hass, mock_coordinator, climate_entity):
         """Test target_temperature property."""
         await mock_coordinator.async_refresh()
 
-        temp = climate_entity.target_temperature
+        temp = climate_entity.native_target_temperature
 
         assert temp == 21.0
 
@@ -362,17 +362,17 @@ class TestMysaClimateInfloor:
         mock_coordinator.data = {
             "infloor1": {"ambTemp": 20.0, "Infloor": 25.0, "SensorMode": 1}
         }
-        assert infloor_entity.current_temperature == 25.0
+        assert infloor_entity.native_current_temperature == 25.0
 
         # 2. Ambient Mode (SensorMode = 0) -> Should pick ambient (ambTemp)
         mock_coordinator.data = {
             "infloor1": {"ambTemp": 20.0, "Infloor": 25.0, "SensorMode": 0}
         }
-        assert infloor_entity.current_temperature == 20.0
+        assert infloor_entity.native_current_temperature == 20.0
 
         # 3. Default (no SensorMode) -> Should fallback to ambient
         mock_coordinator.data = {"infloor1": {"ambTemp": 21.0, "Infloor": 25.0}}
-        assert infloor_entity.current_temperature == 21.0
+        assert infloor_entity.native_current_temperature == 21.0
 
         # 4. Fallback to SensorTemp if nothing else
         mock_coordinator.data = {
@@ -381,7 +381,7 @@ class TestMysaClimateInfloor:
                 "SensorMode": 1,  # Mode 1 but no Infloor temp
             }
         }
-        assert infloor_entity.current_temperature == 22.0
+        assert infloor_entity.native_current_temperature == 22.0
 
 
 class TestMysaClimateActions:
@@ -1119,7 +1119,7 @@ class TestClimateHelperMethods:
 
             with patch("custom_components.mysa.climate._LOGGER") as mock_logger:
                 # First call triggers warning
-                val = entity.current_temperature
+                val = entity.native_current_temperature
                 assert val == 25.5
                 mock_logger.warning.assert_called_once()
                 assert (
@@ -1130,14 +1130,14 @@ class TestClimateHelperMethods:
                 mock_logger.warning.reset_mock()
 
                 # Second call should NOT trigger warning (already logged)
-                val = entity.current_temperature
+                val = entity.native_current_temperature
                 mock_logger.warning.assert_not_called()
 
             # Now simulate CorrectedTemp appearing
             mock_state.return_value = {"CorrectedTemp": 21.0, "SensorTemp": 25.5}
 
             # This should clear the warning flag
-            val = entity.current_temperature
+            val = entity.native_current_temperature
             assert val == 21.0
 
             # Now simulate falling back AGAIN
@@ -1145,7 +1145,7 @@ class TestClimateHelperMethods:
 
             with patch("custom_components.mysa.climate._LOGGER") as mock_logger:
                 # Should warn again
-                val = entity.current_temperature
+                val = entity.native_current_temperature
                 mock_logger.warning.assert_called_once()
 
 
@@ -1315,8 +1315,8 @@ class TestClimateEdgeCases:
             mock_entry,
         )
 
-        assert entity.current_temperature is None
-        assert entity.target_temperature is None
+        assert entity.native_current_temperature is None
+        assert entity.native_target_temperature is None
         assert entity.current_humidity is None
 
     @pytest.mark.asyncio
@@ -2187,7 +2187,7 @@ class TestClimateFinal100:
         )
 
         # Line 128 -> return None
-        assert entity.current_temperature is None
+        assert entity.native_current_temperature is None
 
     @pytest.mark.asyncio
     async def test_current_temp_float_fail(self, hass, mock_entry):
@@ -2211,7 +2211,7 @@ class TestClimateFinal100:
         entity = MysaClimate(coord, "d1", device_data, mock_api, mock_entry)
 
         # Should catch ValueError and return None
-        assert entity.current_temperature is None
+        assert entity.native_current_temperature is None
 
     @pytest.mark.asyncio
     async def test_target_temp_none_when_key_missing(
@@ -2227,7 +2227,7 @@ class TestClimateFinal100:
         )
 
         # Line 143 -> return None
-        assert entity.target_temperature is None
+        assert entity.native_target_temperature is None
 
     @pytest.mark.asyncio
     async def test_humidity_none_when_key_missing(
@@ -2566,7 +2566,7 @@ class TestClimateEdgeCasesAdditional:
         entity = MysaClimate(coordinator, "device1", device_data, mock_api, mock_entry)
 
         # Zero temp should return None (line 127)
-        assert entity.current_temperature is None
+        assert entity.native_current_temperature is None
 
     @pytest.mark.asyncio
     async def test_climate_target_temp_none_state(self, hass, mock_entry):
@@ -2589,7 +2589,7 @@ class TestClimateEdgeCasesAdditional:
         device_data = {"Id": "device1", "Name": "Test", "Model": "BB-V2"}
         entity = MysaClimate(coordinator, "device1", device_data, mock_api, mock_entry)
 
-        assert entity.target_temperature is None
+        assert entity.native_target_temperature is None
         assert entity.current_humidity is None
 
     @pytest.mark.asyncio
@@ -3257,12 +3257,12 @@ async def test_climate_edge_cases(
     assert climate.current_humidity is None
 
     # Test missing state for target temperature
-    assert climate.target_temperature is None
+    assert climate.native_target_temperature is None
 
     # Test missing coordinator data
     mock_coordinator.data = None
     assert climate.current_humidity is None
-    assert climate.target_temperature is None
+    assert climate.native_target_temperature is None
 
 
 @pytest.mark.asyncio
@@ -3283,7 +3283,7 @@ async def test_climate_exception_handling(
     )
 
     # Trigger current_temperature exception
-    assert climate.current_temperature is None
+    assert climate.native_current_temperature is None
 
     # AC Climate supported options exception
     ac_device_data = mock_device_data.copy()
@@ -3340,7 +3340,7 @@ async def test_ac_dry_mode_restore_logic(
 
     # 1. Start with valid temp (21.0) and HEAT mode
     mock_coordinator.data = {"dev1": {"stpt": 21.0, "Mode": 3}}  # Heat
-    assert entity.target_temperature == 21.0
+    assert entity.native_target_temperature == 21.0
 
     # 2. Switch to Dry Mode
     # Should save 21.0 and set to 0 (optimistically via sticky state)
@@ -3350,7 +3350,7 @@ async def test_ac_dry_mode_restore_logic(
     # Verify set_target_temperature(0) was NOT called
     mock_api.set_target_temperature.assert_not_called()
     # Verify temp remains visible (no force 0)
-    assert entity.target_temperature == 21.0
+    assert entity.native_target_temperature == 21.0
 
     # 3. Switch back to HEAT
     # Should NOT restore temp (Device remembers it)
@@ -3379,7 +3379,7 @@ async def test_climate_infloor_respects_cache(hass, mock_coordinator, mock_entry
     }
 
     # This confirms that IF the cache is updated (by select entity), Climate reads it correctly
-    assert entity.current_temperature == 30.0
+    assert entity.native_current_temperature == 30.0
 
 
 @pytest.mark.asyncio
@@ -3413,7 +3413,7 @@ async def test_climate_infloor_tracked_sensor_fallback(
 
     # Now check if Climate picks it up
     assert data["SensorMode"] == 1
-    assert entity.current_temperature == 30.0
+    assert entity.native_current_temperature == 30.0
 
 
 @pytest.mark.asyncio
@@ -3453,7 +3453,7 @@ async def test_climate_infloor_tracked_sensor_camel_case(
     assert data.get("Infloor") == 22.2
 
     # Check Climate entity behavior
-    assert entity.current_temperature == 22.2
+    assert entity.native_current_temperature == 22.2
 
 
 @pytest.mark.asyncio
@@ -3487,7 +3487,7 @@ async def test_climate_infloor_tracked_sensor_malformed(
     # Should not crash, and SensorMode should remain None
     assert data.get("SensorMode") is None
     # Should fall back to Ambient temp (default logic when SensorMode missing)
-    assert entity.current_temperature == 16.2
+    assert entity.native_current_temperature == 16.2
 
 
 class TestClimateCoverageGaps:
@@ -3637,16 +3637,16 @@ class TestMysaSTV10ClimateExtended:
         climate.hass = hass
 
         # 1. State missing entirely
-        assert climate.target_temperature is None
+        assert climate.native_target_temperature is None
 
         # 2. State present but missing setpoints
         api.states[device_id] = {"Online": True, "min_setpoint": 10.0, "max_setpoint": 30.0}
         api.states[device_id]["md"] = 4  # Heat
-        assert climate.target_temperature is None
+        assert climate.native_target_temperature is None
 
         # 3. Target temperature low/high in non-HEAT_COOL
-        assert climate.target_temperature_low is None
-        assert climate.target_temperature_high is None
+        assert climate.native_target_temperature_low is None
+        assert climate.native_target_temperature_high is None
 
     async def test_stv10_hvac_action_cases(self, hass):
         """Test all hvac_action branches for ST-V1-0."""
@@ -3751,10 +3751,10 @@ class TestMysaSTV10ClimateExtended:
             climate.hass = hass
 
         # Test target_temperature_low with state
-        assert climate.target_temperature_low == 18.0
+        assert climate.native_target_temperature_low == 18.0
 
         # Test target_temperature_high with state
-        assert climate.target_temperature_high == 24.0
+        assert climate.native_target_temperature_high == 24.0
 
         # Test with primary keys
         coordinator.data["stv10"] = {
@@ -3764,8 +3764,8 @@ class TestMysaSTV10ClimateExtended:
         }
         api.states["stv10"] = {"target_heat": 19.0, "target_cool": 25.0}
 
-        assert climate.target_temperature_low == 19.0
-        assert climate.target_temperature_high == 25.0
+        assert climate.native_target_temperature_low == 19.0
+        assert climate.native_target_temperature_high == 25.0
 
 
 # ===========================================================================
@@ -3793,16 +3793,16 @@ class TestClimateBaseConsolidated:
     async def test_target_temperature_low_high_consolidated(self, base_climate):
         """Test generic target_temperature_low/high properties (lines 258-277)."""
         base_climate.coordinator.data = {}
-        assert base_climate.target_temperature_low is None
-        assert base_climate.target_temperature_high is None
+        assert base_climate.native_target_temperature_low is None
+        assert base_climate.native_target_temperature_high is None
 
         base_climate.coordinator.data = {"d1_base": {"target_heat": 20.0, "target_cool": 25.0}}
-        assert base_climate.target_temperature_low == 20.0
-        assert base_climate.target_temperature_high == 25.0
+        assert base_climate.native_target_temperature_low == 20.0
+        assert base_climate.native_target_temperature_high == 25.0
 
         base_climate.coordinator.data = {"d1_base": {"heatSetpoint": 21.0, "coolSetpoint": 26.0}}
-        assert base_climate.target_temperature_low == 21.0
-        assert base_climate.target_temperature_high == 26.0
+        assert base_climate.native_target_temperature_low == 21.0
+        assert base_climate.native_target_temperature_high == 26.0
 
     @pytest.mark.asyncio
     async def test_extra_state_attributes_consolidated(self, base_climate):
@@ -3857,10 +3857,10 @@ class TestClimateFahrenheitConsolidated:
         device_data = {"Id": "f_dev", "Name": "F Room", "Model": "BB-V2", "type": 4}
         entity = MysaClimate(fahrenheit_coordinator, "f_dev", device_data, mock_api, mock_entry)
         entity.hass = hass
-        assert entity.temperature_unit == UnitOfTemperature.FAHRENHEIT
+        assert entity.native_temperature_unit == UnitOfTemperature.FAHRENHEIT
         assert entity.target_temperature_step == 1.0
-        assert entity.current_temperature == 70
-        assert entity.target_temperature == 72
+        assert entity.native_current_temperature == 70
+        assert entity.native_target_temperature == 72
 
     @pytest.mark.asyncio
     async def test_set_temperature_fahrenheit_consolidated(self, hass, fahrenheit_coordinator, mock_api, mock_entry):
@@ -3956,7 +3956,7 @@ class TestClimateFinalCoverageConsolidated:
         """Test target_temperature cool mode fallback."""
         mock_coordinator.data = {"dev_final": {"mode": 3}}
         with patch.object(stv10_climate_final, "_async_ensure_data") as mock_ensure:
-            assert stv10_climate_final.target_temperature is None
+            assert stv10_climate_final.native_target_temperature is None
             mock_ensure.assert_called_once()
 
 
@@ -3996,7 +3996,7 @@ class TestClimateExtraConsolidated:
         climate = MysaClimate(MagicMock(), "d1", {"Model": "V1"}, MagicMock(), MagicMock())
         climate.hass = hass
         with patch.object(climate, "_get_state_data", return_value={"temperature_format": "F"}):
-            assert climate.temperature_unit == "°F"
+            assert climate.native_temperature_unit == "°F"
             assert climate._convert_to_display(20.0) == 68
             assert climate._convert_from_display(68.0) == 20.0
 
@@ -4005,7 +4005,7 @@ class TestClimateExtraConsolidated:
             stv1_climate = MysaSTV10Climate(MagicMock(), "s1", {"Model": "ST-V1-0"}, MagicMock(), MagicMock())
             stv1_climate.hass = hass
             with patch.object(stv1_climate, "_get_state_data", return_value={"temperature_format": "F"}):
-                assert stv1_climate.temperature_unit == "°F"
+                assert stv1_climate.native_temperature_unit == "°F"
                 assert stv1_climate.target_temperature_step == 1.0
 
     @pytest.mark.asyncio
@@ -4033,11 +4033,11 @@ class TestClimateExtraConsolidated:
         with patch.object(MysaSTV10Climate, "_async_ensure_data"):
             # target_temp for Heat mode
             coordinator.data = {"d1": {"md": 4, "target_heat": 20.0}}
-            assert climate.target_temperature == 20.0
+            assert climate.native_target_temperature == 20.0
 
             # target_temp for Cool mode
             coordinator.data["d1"] = {"md": 3, "target_cool": 22.0}
-            assert climate.target_temperature == 22.0
+            assert climate.native_target_temperature == 22.0
 
     @pytest.mark.asyncio
     async def test_climate_stv10_coverage_final_consolidated(self, hass):
@@ -4056,7 +4056,7 @@ class TestClimateExtraConsolidated:
 
             # target_temperature in OFF/FAN/HEAT_COOL
             coordinator.data = {"d1": {"md": 7}} # FAN_ONLY
-            assert climate.target_temperature is None
+            assert climate.native_target_temperature is None
 
             # hvac_action variants
             coordinator.data = {"d1": {"md": 4, "hvac_state": 4, "target_heat": 22.0, "current_temp": 20.0}}
@@ -4153,7 +4153,7 @@ class TestClimateConsolidated:
         with patch.object(
             climate, "_get_state_data", return_value={"temperature_format": "F"}
         ):
-            assert climate.temperature_unit == "°F"
+            assert climate.native_temperature_unit == "°F"
             assert climate.target_temperature_step == 1.0
 
             # _convert_to_display
@@ -4171,7 +4171,7 @@ class TestClimateConsolidated:
             with patch.object(
                 stv1_climate, "_get_state_data", return_value={"temperature_format": "F"}
             ):
-                assert stv1_climate.temperature_unit == "°F"
+                assert stv1_climate.native_temperature_unit == "°F"
                 assert stv1_climate.target_temperature_step == 1.0
 
     @pytest.mark.asyncio
@@ -4214,21 +4214,21 @@ class TestClimateConsolidated:
 
             # 1. target_temperature for ST-V1-0
             coordinator.data = {"d1_prop": {"md": 1, "target_heat": 20.0}}  # 1=HEAT_COOL
-            assert climate.target_temperature is None
+            assert climate.native_target_temperature is None
 
             # Change mode to COOL (3)
             coordinator.data["d1_prop"] = {"md": 3, "target_cool": 22.0}
-            assert climate.target_temperature == 22.0
+            assert climate.native_target_temperature == 22.0
 
             # 2. target_temperature_low/high
             coordinator.data["d1_prop"] = {"md": 1}  # HEAT_COOL
-            assert climate.target_temperature_low is None
-            assert climate.target_temperature_high is None
+            assert climate.native_target_temperature_low is None
+            assert climate.native_target_temperature_high is None
 
             # With target data
             coordinator.data["d1_prop"] = {"md": 1, "target_heat": 20.5, "target_cool": 24.5}
-            assert climate.target_temperature_low == 20.5
-            assert climate.target_temperature_high == 24.5
+            assert climate.native_target_temperature_low == 20.5
+            assert climate.native_target_temperature_high == 24.5
 
             # HVAC Action
             coordinator.data["d1_prop"] = {
@@ -4317,13 +4317,13 @@ class TestClimateConsolidated:
 
                 # Case with data (lines 1146, 1161)
                 coordinator.data = {"stv2_targeted": {"target_heat": 20.0, "target_cool": 25.0}}
-                assert climate.target_temperature_low == 20.0
-                assert climate.target_temperature_high == 25.0
+                assert climate.native_target_temperature_low == 20.0
+                assert climate.native_target_temperature_high == 25.0
 
                 # Case with NO data (lines 1141, 1157)
                 coordinator.data = {}
-                assert climate.target_temperature_low is None
-                assert climate.target_temperature_high is None
+                assert climate.native_target_temperature_low is None
+                assert climate.native_target_temperature_high is None
 
             # fan_mode fallback (line 1170)
             coordinator.data = {}  # Force _get_state_data to return None
@@ -4410,9 +4410,9 @@ class TestClimateConsolidated:
              with patch.object(MysaSTV10Climate, "hvac_mode", new_callable=PropertyMock) as mock_mode:
                  mock_mode.return_value = HVACMode.HEAT_COOL
                  coordinator.data = {"stv5_targeted": {"hvac_state": 4}}
-                 with patch.object(MysaSTV10Climate, "current_temperature", new_callable=PropertyMock) as mock_cur, \
-                      patch.object(MysaSTV10Climate, "target_temperature_low", new_callable=PropertyMock) as mock_low, \
-                      patch.object(MysaSTV10Climate, "target_temperature_high", new_callable=PropertyMock) as mock_high:
+                 with patch.object(MysaSTV10Climate, "native_current_temperature", new_callable=PropertyMock) as mock_cur, \
+                      patch.object(MysaSTV10Climate, "native_target_temperature_low", new_callable=PropertyMock) as mock_low, \
+                      patch.object(MysaSTV10Climate, "native_target_temperature_high", new_callable=PropertyMock) as mock_high:
 
                      mock_cur.return_value = 18.0
                      mock_low.return_value = 20.0

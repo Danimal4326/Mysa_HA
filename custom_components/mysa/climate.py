@@ -157,7 +157,7 @@ class MysaClimate(
         return val
 
     @property
-    def temperature_unit(self) -> str:
+    def native_temperature_unit(self) -> str:
         """Return the unit of measurement."""
         state = self._get_state_data()
         if state and state.get("temperature_format") == "F":
@@ -167,7 +167,7 @@ class MysaClimate(
     @property
     def target_temperature_step(self) -> float:
         """Return the supported step of target temperature."""
-        if self.temperature_unit == UnitOfTemperature.FAHRENHEIT:
+        if self.native_temperature_unit == UnitOfTemperature.FAHRENHEIT:
             return 1.0
         return 0.5  # Default for Celsius
 
@@ -175,18 +175,18 @@ class MysaClimate(
         """Convert Celsius value to display unit (F or C)."""
         if temp_c is None:
             return None
-        if self.temperature_unit == UnitOfTemperature.FAHRENHEIT:
+        if self.native_temperature_unit == UnitOfTemperature.FAHRENHEIT:
             return round(temp_c * 9 / 5 + 32)
         return round(temp_c, 1)  # Round to 1 decimal place for Celsius
 
     def _convert_from_display(self, temp: float) -> float:
         """Convert display value (F or C) to Celsius."""
-        if self.temperature_unit == UnitOfTemperature.FAHRENHEIT:
+        if self.native_temperature_unit == UnitOfTemperature.FAHRENHEIT:
             return (temp - 32) * 5 / 9
         return temp
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Return current temperature."""
         state = self._get_state_data()
         if not state:
@@ -248,7 +248,7 @@ class MysaClimate(
         return None
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return target temperature."""
         state = self._get_state_data()
         if not state:
@@ -264,7 +264,7 @@ class MysaClimate(
         return self._convert_to_display(float(val)) if val is not None else None
 
     @property
-    def target_temperature_low(self) -> float | None:
+    def native_target_temperature_low(self) -> float | None:
         """Return the lower bound target temperature (Heat)."""
         state = self._get_state_data()
         if not state:
@@ -276,7 +276,7 @@ class MysaClimate(
         return self._convert_to_display(float(val)) if val is not None else None
 
     @property
-    def target_temperature_high(self) -> float | None:
+    def native_target_temperature_high(self) -> float | None:
         """Return the upper bound target temperature (Cool)."""
         state = self._get_state_data()
         if not state:
@@ -419,10 +419,10 @@ class MysaClimate(
                 pass
 
         # Fallback: compare the controlling temperature with the setpoint.
-        # current_temperature follows SensorMode (floor vs air) on In-Floor
+        # native_current_temperature follows SensorMode (floor vs air) on In-Floor
         # units; comparing raw ambTemp against a floor setpoint was wrong.
-        current = self.current_temperature
-        target = self.target_temperature
+        current = self.native_current_temperature
+        target = self.native_target_temperature
         if (
             current is not None
             and target is not None
@@ -1012,7 +1012,7 @@ class MysaSTV10Climate(MysaClimate):
     @property
     def target_temperature_step(self) -> float:
         """Return the supported step of target temperature from capabilities."""
-        if self.temperature_unit == UnitOfTemperature.FAHRENHEIT:
+        if self.native_temperature_unit == UnitOfTemperature.FAHRENHEIT:
             return 1.0
         return float(self._attr_target_temperature_step or 0.5)
 
@@ -1095,7 +1095,7 @@ class MysaSTV10Climate(MysaClimate):
         return None
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return target temperature."""
         state = self._get_state_data()
         if not state:
@@ -1190,7 +1190,7 @@ class MysaSTV10Climate(MysaClimate):
         return cast(float, self._convert_to_display(self._attr_max_temp))
 
     @property
-    def target_temperature_low(self) -> float | None:
+    def native_target_temperature_low(self) -> float | None:
         """Return the lower bound target temperature."""
         if self.hvac_mode != HVACMode.HEAT_COOL:
             return None
@@ -1206,7 +1206,7 @@ class MysaSTV10Climate(MysaClimate):
         return None
 
     @property
-    def target_temperature_high(self) -> float | None:
+    def native_target_temperature_high(self) -> float | None:
         """Return the upper bound target temperature."""
         if self.hvac_mode != HVACMode.HEAT_COOL:
             return None
@@ -1311,9 +1311,9 @@ class MysaSTV10Climate(MysaClimate):
             return action
 
         # Auto Mode Inference
-        current = self.current_temperature
-        low = self.target_temperature_low
-        high = self.target_temperature_high
+        current = self.native_current_temperature
+        low = self.native_target_temperature_low
+        high = self.native_target_temperature_high
 
         if current is not None:
             if low is not None and current < low + 1.0:
