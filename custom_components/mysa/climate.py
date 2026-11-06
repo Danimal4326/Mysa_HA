@@ -637,9 +637,11 @@ class MysaACClimate(MysaClimate):
 
         # Sort the final list to maintain consistent UI order
         self._supported_fan_modes.sort(
-            key=lambda x: list(AC_FAN_MODES.values()).index(x)
-            if x in AC_FAN_MODES.values()
-            else 99
+            key=lambda x: (
+                list(AC_FAN_MODES.values()).index(x)
+                if x in AC_FAN_MODES.values()
+                else 99
+            )
         )
 
     def _build_swing_modes(self, modes: dict[str, Any]) -> None:
@@ -668,9 +670,11 @@ class MysaACClimate(MysaClimate):
 
         # Sort the final list
         self._supported_swing_modes.sort(
-            key=lambda x: list(AC_SWING_MODES.values()).index(x)
-            if x in AC_SWING_MODES.values()
-            else 99
+            key=lambda x: (
+                list(AC_SWING_MODES.values()).index(x)
+                if x in AC_SWING_MODES.values()
+                else 99
+            )
         )
 
     @property

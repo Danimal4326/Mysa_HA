@@ -64,7 +64,6 @@ ignore = [
     "D407", # Missing dashed underline after section
     "E501", # line too long (handled by formatter)
     "D401", # First line of docstring should be in imperative mood (Relaxed for now)
-    "UP038", # Use X | Y in isinstance call (Conflict with python version support?)
     "SIM102", # Use a single if statement instead of nested if statements
     "SIM105", # Use contextlib.suppress instead of try-except-pass
     "SIM117", # Combine with statements
