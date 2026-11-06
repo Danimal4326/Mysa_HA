@@ -22,7 +22,7 @@ import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 # Module-level imports after path setup
 from custom_components.mysa.const import DOMAIN
@@ -292,7 +292,7 @@ from datetime import timedelta
 
 import pytest
 from homeassistant.util import dt as dt_util
-from pytest_homeassistant_custom_component.common import (
+from pytest_homeassistant.common import (
     async_fire_time_changed,
 )
 
@@ -687,10 +687,15 @@ class TestSetupFlowAsync:
             mock_store_instance.async_load = AsyncMock(return_value=None)
             mock_store_instance.async_save = AsyncMock()
 
-            api = MysaApi("test@example.com", "password123", hass)
+            # Pass the session explicitly: without one MysaApi builds its own
+            # aiohttp ClientSession, which opens real sockets.
+            api = MysaApi(
+                "test@example.com", "password123", hass, websession=mock_session
+            )
             result = await api.authenticate()
 
             assert result
+            mock_session.get.assert_called()
 
 
 class TestCommandFlowAsync:

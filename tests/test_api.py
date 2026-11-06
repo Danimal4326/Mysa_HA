@@ -629,7 +629,7 @@ class TestMysaApi:
 
     async def test_get_electricity_rate_with_custom_override(self, hass):
         """Test get_electricity_rate with custom_erate override from mysa_extended."""
-        from pytest_homeassistant_custom_component.common import MockConfigEntry
+        from pytest_homeassistant.common import MockConfigEntry
 
         with (
             patch("custom_components.mysa.mysa_api.MysaClient"),

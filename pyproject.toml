@@ -10,7 +10,7 @@ disable = [
 ]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 strict = true
 check_untyped_defs = true
 disallow_any_generics = true

@@ -18,7 +18,7 @@ if not MYSA_RECORD:
 
 import pytest
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant.common import MockConfigEntry
 
 # Test directory paths (for reference, not for sys.path manipulation)
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,6 +34,27 @@ ROOT_DIR = os.path.dirname(TEST_DIR)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations defined in the test directory."""
     yield
+
+
+@pytest.fixture(autouse=True)
+def block_aws_network():
+    """Fail AWS (botocore) HTTP calls immediately instead of opening a socket.
+
+    Some tests reach real pycognito/boto3 code. pytest-homeassistant fails any
+    test that tries to open a socket, so raise the same client error those
+    tests already hit, without touching the network.
+    """
+    if MYSA_RECORD:
+        yield
+        return
+    from botocore.exceptions import HTTPClientError
+
+    def _blocked(_self, request):
+        # HTTPClientError is not retried by botocore, so tests stay fast
+        raise HTTPClientError(error=RuntimeError("network disabled in tests"))
+
+    with patch("botocore.httpsession.URLLib3Session.send", _blocked):
+        yield
 
 
 @pytest.fixture(name="skip_notifications", autouse=True)
